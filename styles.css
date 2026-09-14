@@ -1,0 +1,15 @@
+
+:root { --ink:#1c1916; --muted:#5c574f; --paper:#f6f1e8; --line:#d9d1c3; --accent:#8b3d2a; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink); font:18px/1.5 Georgia, "Times New Roman", serif; }
+.wrap { width:min(720px, calc(100% - 40px)); margin:0 auto; }
+.nav { display:flex; justify-content:space-between; gap:16px; padding:22px 0; border-bottom:1px solid var(--line); font-family:system-ui,sans-serif; font-size:14px; }
+h1 { font-size:clamp(36px,6vw,54px); line-height:1.05; letter-spacing:-.03em; }
+h2 { margin-top:2.2rem; }
+.eyebrow { font-family:system-ui,sans-serif; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); }
+.lede { color:var(--muted); font-size:20px; }
+.btn { display:inline-block; background:var(--accent); color:#fff; text-decoration:none; padding:12px 18px; font-family:system-ui,sans-serif; font-size:14px; font-weight:600; }
+ul { padding-left:1.2em; }
+footer { border-top:1px solid var(--line); margin-top:48px; padding:24px 0 48px; color:var(--muted); font-size:14px; }
+a { color:var(--accent); }
+pre, .kit { font-family:ui-monospace,monospace; font-size:14px; }
