@@ -4,27 +4,58 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>GateClaim — file the airline claim tonight</title>
-  <meta name="description" content="A $24 kit: the right letter, proof list, and deadlines after a delay, cancel, or bump. Not a payout promise." />
+  <meta name="description" content="Flight details in, claim letter out. $24 kit. Not a payout promise." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="wrap nav">
     <strong>File This · GateClaim</strong>
-    <a href="kit.html">Open the free sample</a>
+    <a href="#letter">Make the letter</a>
   </header>
   <main class="wrap">
     <p class="eyebrow">One-time kit · $24</p>
-    <h1>Your flight broke. File tonight — with the right letter.</h1>
-    <p class="lede">Most people accept a voucher or do nothing. GateClaim is the claim letter, the proof list, and the deadline calendar. Read the sample, then buy if you want the letters in one place.</p>
-    <p><a class="btn" href="https://buy.stripe.com/28E3cnbHIbBq5pN8Jz6wE00">Buy GateClaim — $24</a> &nbsp; <a href="kit.html">Read the free sample</a></p>
+    <h1>Flight in. Letter out. Tonight.</h1>
+    <p class="lede">Fill the form. Copy the letter. Send it to the airline. This is DIY — we do not file for you and we do not take a cut.</p>
+    <p><a class="btn" href="#letter">Make my letter</a> &nbsp; <a href="https://buy.stripe.com/28E3cnbHIbBq5pN8Jz6wE00">Buy the $24 kit</a></p>
 
-    <h2>What you get</h2>
-    <ul>
-      <li>Which track you’re on: US refund rules vs EU 261 cash (they are not the same)</li>
-      <li>Four letters you can paste</li>
-      <li>What to photograph before you leave the airport</li>
-      <li>When to escalate to DOT or a national authority</li>
-    </ul>
+    <form class="form" id="letter" onsubmit="return makeLetter(event)">
+      <h2>Make the letter</h2>
+      <p class="note">Not an eligibility checker. It fills the right template. US delays are not automatic €600.</p>
+      <label>Your name</label>
+      <input id="name" required placeholder="Jordan Lee" />
+      <div class="grid2">
+        <div><label>Airline</label><input id="airline" required placeholder="Delta" /></div>
+        <div><label>Flight number</label><input id="flight" required placeholder="DL 412" /></div>
+      </div>
+      <div class="grid2">
+        <div><label>Date</label><input id="date" required placeholder="14 Sep 2026" /></div>
+        <div><label>Record locator</label><input id="pnr" required placeholder="ABC123" /></div>
+      </div>
+      <div class="grid2">
+        <div><label>From</label><input id="orig" required placeholder="ATL" /></div>
+        <div><label>To</label><input id="dest" required placeholder="LHR" /></div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>What happened</label>
+          <select id="what">
+            <option value="cancelled">Cancelled</option>
+            <option value="delayed">Delayed / schedule change</option>
+            <option value="bumped">Involuntarily denied boarding</option>
+          </select>
+        </div>
+        <div><label>Hours late at destination (if known)</label><input id="hours" placeholder="4" /></div>
+      </div>
+      <label>Which rules</label>
+      <select id="track">
+        <option value="us">US itinerary — refund / bump (DOT)</option>
+        <option value="eu">EU / EEA / Swiss rights — 261/2004</option>
+      </select>
+      <p style="margin-top:18px"><button class="btn" type="submit">Fill the letter</button></p>
+      <label>Your letter — copy and send to the airline</label>
+      <textarea id="out" readonly></textarea>
+      <p><button class="btn" type="button" onclick="copyOut()">Copy letter</button></p>
+    </form>
 
     <h2>What you do not get</h2>
     <ul>
@@ -33,13 +64,47 @@
       <li>A lawyer or a claims agency taking a cut</li>
       <li>Legal advice</li>
     </ul>
-
-    <h2>Why $24</h2>
-    <p>If you only get the fare back, the kit is cheap. If a bump or an EU 261 claim applies, public ranges are hundreds of dollars or euros — still not a promise.</p>
-    <p><a class="btn" href="https://buy.stripe.com/28E3cnbHIbBq5pN8Jz6wE00">Buy the $24 kit</a></p>
+    <p><a class="btn" href="https://buy.stripe.com/28E3cnbHIbBq5pN8Jz6wE00">Buy GateClaim — $24</a> &nbsp; <a href="kit.html">Full kit (proof list + deadlines)</a></p>
   </main>
   <footer class="wrap">
     <p>File This · group-run · not a law firm. Verify current rules on DOT and Your Europe before you send.</p>
   </footer>
+  <script>
+  function v(id){ return document.getElementById(id).value.trim() || "[fill in]"; }
+  function makeLetter(e){
+    e.preventDefault();
+    var name=v("name"), air=v("airline"), fl=v("flight"), dt=v("date"), pnr=v("pnr");
+    var a=v("orig"), b=v("dest"), what=document.getElementById("what").value, hrs=v("hours");
+    var track=document.getElementById("track").value, text="";
+    if(track==="us" && what==="bumped"){
+      text="Subject: Denied boarding compensation — "+air+" "+fl+" "+dt+" — "+pnr+"\n\n"+
+        "I was involuntarily denied boarding on "+air+" "+fl+" on "+dt+", record locator "+pnr+", "+a+" to "+b+". I did not volunteer my seat. Alternate arrival was "+hrs+" hours after the original arrival.\n\n"+
+        "Please pay denied boarding compensation under 14 CFR part 250 and refund unused ancillary fees.\n\n"+
+        "Attachments: boarding pass, bump notice, substitute itinerary.\n\n"+name;
+    } else if(track==="us"){
+      var ev = what==="cancelled" ? "cancelled" : "delayed or changed by "+hrs+" hours";
+      text="Subject: Refund request — "+air+" "+fl+" "+dt+" — record locator "+pnr+"\n\n"+
+        "I held a ticket on "+air+" "+fl+" from "+a+" to "+b+" on "+dt+", record locator "+pnr+".\n\n"+
+        "The flight was "+ev+". I did not accept rebooking, a voucher, or other compensation. I want a full refund of the airfare, taxes, and unused ancillary fees to the original form of payment.\n\n"+
+        "This follows DOT refund rules for cancelled or significantly delayed/changed flights:\nhttps://www.transportation.gov/individuals/aviation-consumer-protection/refunds\n\n"+
+        "Attachments: ticket, delay notice, receipts (if any).\n\n"+name;
+    } else {
+      var ev = what==="bumped" ? "denied boarding" : (what==="cancelled" ? "cancelled" : "delayed "+hrs+" hours at destination");
+      text="Subject: Regulation 261/2004 claim — "+air+" "+fl+" "+dt+" — "+pnr+"\n\n"+
+        "I request the compensation, refund/re-routing choice, and assistance due under Regulation (EC) 261/2004.\n\n"+
+        "Flight: "+air+" "+fl+"  "+a+" → "+b+"  "+dt+"\nRecord locator: "+pnr+"\nDelay at destination: "+hrs+" hours\nWhat happened: "+ev+"\n\n"+
+        "I have not received benefits for this disruption under another country's rules. If you claim extraordinary circumstances, send the evidence.\n\n"+
+        "Official summary: https://europa.eu/youreurope/citizens/travel/passenger-rights/air/index_en.htm\n\n"+
+        "Attachments: ticket, boarding pass, delay notice, receipts.\n\n"+name;
+    }
+    document.getElementById("out").value = text;
+    return false;
+  }
+  function copyOut(){
+    var t=document.getElementById("out");
+    t.select();
+    navigator.clipboard.writeText(t.value);
+  }
+  </script>
 </body>
 </html>
