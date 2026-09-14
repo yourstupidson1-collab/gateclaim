@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Flight delayed refund letter — GateClaim</title>
-  <meta name="description" content="Free flight delayed refund letter. US DOT refunds vs EU 261 cash are not the same. Fill your flight, copy the letter, send it tonight. $24 kit optional." />
+  <title>What you may be owed after a delayed or cancelled flight — GateClaim</title>
+  <meta name="description" content="Free claim assessment for delayed, cancelled, or bumped flights. See which US refund or EU 261 paths may apply, what evidence you need, then generate the letter. $24 kit optional. Not a payout promise." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -13,14 +13,14 @@
     <a href="flight-delayed-refund.html">Flight delayed refund</a>
   </header>
   <main class="wrap">
-    <p class="eyebrow">One-time kit · $24</p>
-    <h1>Flight in. Letter out. Tonight.</h1>
-    <p class="lede">Fill the form. Copy the letter. Send it to the airline. This is DIY — we do not file for you and we do not take a cut.</p>
-    <p><a class="btn" href="#letter">Make my letter</a> &nbsp; <a href="https://buy.stripe.com/28E3cnbHIbBq5pN8Jz6wE00">Buy the $24 kit</a></p>
+    <p class="eyebrow">Free assessment · $24 kit</p>
+    <h1>Your flight went wrong. Find out what you may be owed.</h1>
+    <p class="lede">Answer a few questions. GateClaim names the rules that may apply, the evidence to keep, and the letter to send. We do not file for you and we do not take a cut.</p>
+    <p><a class="btn" href="#assess">Free claim assessment</a></p>
 
-    <form class="form" id="letter" onsubmit="return makeLetter(event)">
-      <h2>Make the letter</h2>
-      <p class="note">Not an eligibility checker. It fills the right template. US delays are not automatic €600.</p>
+    <form class="form" id="assess" onsubmit="return runAssess(event)">
+      <h2>Free claim assessment</h2>
+      <p class="note">Not a determination you will be paid. US delays are not automatic €600. Letter is one output, not the whole product.</p>
       <label>Your name</label>
       <input id="name" required placeholder="Jordan Lee" />
       <div class="grid2">
@@ -44,19 +44,33 @@
             <option value="bumped">Involuntarily denied boarding</option>
           </select>
         </div>
-        <div><label>Hours late at destination (if known)</label><input id="hours" placeholder="4" /></div>
+        <div><label>Hours late at destination</label><input id="hours" placeholder="4" /></div>
       </div>
-      <label>Which rules</label>
+      <label>Which rules likely apply</label>
       <select id="track">
-        <option value="us">US itinerary — refund / bump (DOT)</option>
-        <option value="eu">EU / EEA / Swiss rights — 261/2004</option>
+        <option value="us">US itinerary (to, from, or within the United States)</option>
+        <option value="eu">EU / EEA / Swiss rights may apply (261/2004)</option>
       </select>
-      <p style="margin-top:18px"><button class="btn" type="submit">Fill the letter</button></p>
-      <label>Your letter — copy and send to the airline</label>
-      <textarea id="out" readonly></textarea>
-      <p><button class="btn" type="button" onclick="copyOut()">Copy letter</button></p>
+      <label>Did you accept rebooking, a voucher, or travel credit?</label>
+      <select id="accepted">
+        <option value="no">No — I want a refund / compensation</option>
+        <option value="yes">Yes — I accepted their alternative</option>
+      </select>
+      <p style="margin-top:18px"><button class="btn" type="submit">See what may apply</button></p>
+      <div id="assess-box">
+        <p class="eyebrow">Possible paths — not a guarantee</p>
+        <ul class="paths" id="pathlist"></ul>
+        <p class="note" id="nextstep"></p>
+        <p><button class="btn" type="button" onclick="makeLetter()">Generate the letter</button></p>
+        <label>Your letter — copy and send to the airline</label>
+        <textarea id="out" readonly></textarea>
+        <p><button class="btn" type="button" onclick="copyOut()">Copy letter</button></p>
+      </div>
     </form>
 
+    <h2>What the $24 kit adds</h2>
+    <p>Follow-up if they ignore you, denial-response letter, proof list, and deadline calendar. The assessment and first letter stay free.</p>
+    <p><a class="btn" href="https://buy.stripe.com/28E3cnbHIbBq5pN8Jz6wE00">Buy the $24 kit</a> &nbsp; <a href="kit.html">Read the full kit</a></p>
     <h2>What you do not get</h2>
     <ul>
       <li>A guaranteed check</li>
@@ -64,15 +78,54 @@
       <li>A lawyer or a claims agency taking a cut</li>
       <li>Legal advice</li>
     </ul>
-    <p><a class="btn" href="https://buy.stripe.com/28E3cnbHIbBq5pN8Jz6wE00">Buy GateClaim — $24</a> &nbsp; <a href="kit.html">Full kit (proof list + deadlines)</a></p>
   </main>
   <footer class="wrap">
     <p>File This · group-run · not a law firm. Verify current rules on DOT and Your Europe before you send.</p>
   </footer>
   <script>
   function v(id){ return document.getElementById(id).value.trim() || "[fill in]"; }
-  function makeLetter(e){
+  function runAssess(e){
     e.preventDefault();
+    var what=document.getElementById("what").value;
+    var track=document.getElementById("track").value;
+    var accepted=document.getElementById("accepted").value;
+    var hrs=parseFloat(document.getElementById("hours").value)||0;
+    var paths=[], next="";
+    paths.push("Keep evidence: boarding pass, delay/cancel notice, receipts, agent names.");
+    if(track==="us"){
+      if(what==="bumped"){
+        paths.push("Possible involuntary denied-boarding cash under 14 CFR part 250. Published caps $1,075 / $2,150 depending on how late the substitute flight arrives — only if you did not volunteer.");
+      }
+      if(what==="cancelled" || (what==="delayed" && hrs>=3)){
+        if(accepted==="no"){
+          paths.push("Possible fare refund (taxes + unused extras) under DOT rules if you choose not to travel. Significant delay often means 3+ hours domestic / 6+ hours international.");
+        } else {
+          paths.push("You accepted an alternative — a fare refund is usually not owed. You can still ask for expenses the airline promised.");
+        }
+      }
+      if(what==="delayed" && hrs<3){
+        paths.push("Under 3 hours: a US fare refund is less likely. Ask for expenses if the delay was in the airline’s control.");
+      }
+      paths.push("Not an automatic €600. That is an EU-style cash band, not a US delay payout.");
+      next="DOT refunds: transportation.gov/individuals/aviation-consumer-protection/refunds";
+    } else {
+      if(what==="bumped" || what==="cancelled" || hrs>=3){
+        paths.push("Possible Regulation 261/2004 cash if the flight is covered and the airline cannot prove extraordinary circumstances. Official bands €250 / €400 / €600 by distance.");
+      }
+      if(accepted==="yes"){
+        paths.push("You already accepted re-routing or reimbursement — cash may still be due depending on delay at arrival; the other two 261 choices are usually closed.");
+      }
+      paths.push("Weather, ATC, and some strikes can block cash even when meals/hotel assistance is still owed.");
+      next="Official: europa.eu/youreurope — air passenger rights.";
+    }
+    var ul=document.getElementById("pathlist");
+    ul.innerHTML="";
+    paths.forEach(function(p){ var li=document.createElement("li"); li.textContent=p; ul.appendChild(li); });
+    document.getElementById("nextstep").textContent="Next: generate the letter, attach the evidence, send it to the operating airline. "+next;
+    document.getElementById("assess-box").style.display="block";
+    return false;
+  }
+  function makeLetter(){
     var name=v("name"), air=v("airline"), fl=v("flight"), dt=v("date"), pnr=v("pnr");
     var a=v("orig"), b=v("dest"), what=document.getElementById("what").value, hrs=v("hours");
     var track=document.getElementById("track").value, text="";
@@ -98,7 +151,6 @@
         "Attachments: ticket, boarding pass, delay notice, receipts.\n\n"+name;
     }
     document.getElementById("out").value = text;
-    return false;
   }
   function copyOut(){
     var t=document.getElementById("out");
