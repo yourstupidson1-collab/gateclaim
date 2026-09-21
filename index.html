@@ -44,7 +44,7 @@
             <option value="bumped">Involuntarily denied boarding</option>
           </select>
         </div>
-        <div><label>Hours late at destination</label><input id="hours" placeholder="4" /></div>
+        <div><label>Hours early or late vs scheduled</label><input id="hours" placeholder="4" /></div>
       </div>
       <label>Which rules likely apply</label>
       <select id="track" onchange="syncUsScope()">
@@ -57,12 +57,12 @@
           <option value="international">International (to or from the United States)</option>
           <option value="domestic">Domestic (within the United States)</option>
         </select>
-        <p class="note">Significant delay for a US fare refund: 3+ hours domestic, 6+ hours international.</p>
+        <p class="note">Significant change vs scheduled times (early or late): 3+ hours domestic, 6+ hours international. Refund only if you decline rebooking/voucher and choose not to travel.</p>
       </div>
-      <label>Did you accept rebooking, a voucher, or travel credit?</label>
+      <label>Did you take the delayed flight, or accept rebooking / a voucher / travel credit?</label>
       <select id="accepted">
-        <option value="no">No — I want a refund / compensation</option>
-        <option value="yes">Yes — I accepted their alternative</option>
+        <option value="no">No — I declined and want a refund / compensation</option>
+        <option value="yes">Yes — I took the delayed flight or their alternative</option>
       </select>
       <div class="grid2">
         <div><label>Fare amount paid</label><input id="fare" placeholder="$428.60" /></div>
@@ -121,13 +121,13 @@
       }
       if(what==="cancelled" || (what==="delayed" && usSignificantDelay(hrs, scope))){
         if(accepted==="no"){
-          paths.push("Possible fare refund (taxes + unused extras) under DOT rules if you choose not to travel. Significant delay for this "+scopeLabel+" US itinerary: "+thresh+"+ hours.");
+          paths.push("Possible fare refund (taxes + unused extras) under DOT rules — only if you decline rebooking/voucher and choose not to travel. Significant change for this "+scopeLabel+" US itinerary: "+thresh+"+ hours early or late vs scheduled.");
         } else {
-          paths.push("You accepted an alternative — a fare refund is usually not owed. You can still ask for expenses the airline promised.");
+          paths.push("You took the delayed flight or accepted an alternative — a US fare refund is usually not owed. You can still ask for expenses the airline promised.");
         }
       }
       if(what==="delayed" && !usSignificantDelay(hrs, scope)){
-        paths.push("Under "+thresh+" hours on a "+scopeLabel+" US itinerary: a US fare refund for significant delay is less likely. Ask for expenses if the delay was in the airline’s control.");
+        paths.push("Under "+thresh+" hours early or late vs scheduled on a "+scopeLabel+" US itinerary: a US fare refund for significant change is less likely. Ask for expenses if the delay was in the airline’s control.");
       }
       paths.push("Not an automatic €600. That is an EU-style cash band, not a US delay payout.");
       next="DOT refunds: transportation.gov/individuals/aviation-consumer-protection/refunds";
@@ -164,10 +164,10 @@
     } else if(track==="us"){
       var thresh = scope === "international" ? "6+" : "3+";
       var scopeLabel = scope === "international" ? "international" : "domestic";
-      var ev = what==="cancelled" ? "cancelled" : "delayed or changed by "+hrs+" hours (significant delay threshold for this "+scopeLabel+" US itinerary: "+thresh+" hours)";
+      var ev = what==="cancelled" ? "cancelled" : "significantly changed by "+hrs+" hours early or late vs scheduled (threshold for this "+scopeLabel+" US itinerary: "+thresh+" hours)";
       text="Subject: Refund request — "+air+" "+fl+" "+dt+" — record locator "+pnr+"\n\n"+
         "I held a ticket on "+air+" "+fl+" from "+a+" to "+b+" on "+dt+", record locator "+pnr+".\n\n"+
-        "The flight was "+ev+". I did not accept rebooking, a voucher, or other compensation.\n\n"+
+        "The flight was "+ev+". I did not take the delayed flight and did not accept rebooking, a voucher, or other compensation. I choose not to travel.\n\n"+
         "Fare amount paid: "+fare+"\nOriginal form of payment: "+payment+"\n\n"+
         "I want a full refund of the airfare, taxes, and unused ancillary fees ("+fare+") to the original form of payment ("+payment+").\n\n"+
         "This follows DOT refund rules for cancelled or significantly delayed/changed flights:\nhttps://www.transportation.gov/individuals/aviation-consumer-protection/refunds\n\n"+
