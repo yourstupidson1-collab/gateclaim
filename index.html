@@ -47,15 +47,27 @@
         <div><label>Hours late at destination</label><input id="hours" placeholder="4" /></div>
       </div>
       <label>Which rules likely apply</label>
-      <select id="track">
+      <select id="track" onchange="syncUsScope()">
         <option value="us">US itinerary (to, from, or within the United States)</option>
         <option value="eu">EU / EEA / Swiss rights may apply (261/2004)</option>
       </select>
+      <div id="us-scope-wrap">
+        <label>US flight type (for significant-delay refund)</label>
+        <select id="usscope">
+          <option value="domestic">Domestic (within the United States)</option>
+          <option value="international">International (to or from the United States)</option>
+        </select>
+        <p class="note">Significant delay for a US fare refund: 3+ hours domestic, 6+ hours international.</p>
+      </div>
       <label>Did you accept rebooking, a voucher, or travel credit?</label>
       <select id="accepted">
         <option value="no">No — I want a refund / compensation</option>
         <option value="yes">Yes — I accepted their alternative</option>
       </select>
+      <div class="grid2">
+        <div><label>Fare amount paid</label><input id="fare" placeholder="$428.60" /></div>
+        <div><label>Original form of payment</label><input id="payment" placeholder="Visa ending 4242" /></div>
+      </div>
       <p style="margin-top:18px"><button class="btn" type="submit">See what may apply</button></p>
       <div id="assess-box">
         <p class="eyebrow">Possible paths — not a guarantee</p>
@@ -84,27 +96,38 @@
   </footer>
   <script>
   function v(id){ return document.getElementById(id).value.trim() || "[fill in]"; }
+  function syncUsScope(){
+    var us = document.getElementById("track").value === "us";
+    document.getElementById("us-scope-wrap").style.display = us ? "block" : "none";
+  }
+  function usSignificantDelay(hrs, scope){
+    if(scope === "international") return hrs >= 6;
+    return hrs >= 3;
+  }
   function runAssess(e){
     e.preventDefault();
     var what=document.getElementById("what").value;
     var track=document.getElementById("track").value;
     var accepted=document.getElementById("accepted").value;
     var hrs=parseFloat(document.getElementById("hours").value)||0;
+    var scope=document.getElementById("usscope").value;
     var paths=[], next="";
     paths.push("Keep evidence: boarding pass, delay/cancel notice, receipts, agent names.");
     if(track==="us"){
+      var thresh = scope === "international" ? 6 : 3;
+      var scopeLabel = scope === "international" ? "international" : "domestic";
       if(what==="bumped"){
         paths.push("Possible involuntary denied-boarding cash under 14 CFR part 250. Published caps $1,075 / $2,150 depending on how late the substitute flight arrives — only if you did not volunteer.");
       }
-      if(what==="cancelled" || (what==="delayed" && hrs>=3)){
+      if(what==="cancelled" || (what==="delayed" && usSignificantDelay(hrs, scope))){
         if(accepted==="no"){
-          paths.push("Possible fare refund (taxes + unused extras) under DOT rules if you choose not to travel. Significant delay often means 3+ hours domestic / 6+ hours international.");
+          paths.push("Possible fare refund (taxes + unused extras) under DOT rules if you choose not to travel. Significant delay for this "+scopeLabel+" US itinerary: "+thresh+"+ hours.");
         } else {
           paths.push("You accepted an alternative — a fare refund is usually not owed. You can still ask for expenses the airline promised.");
         }
       }
-      if(what==="delayed" && hrs<3){
-        paths.push("Under 3 hours: a US fare refund is less likely. Ask for expenses if the delay was in the airline’s control.");
+      if(what==="delayed" && !usSignificantDelay(hrs, scope)){
+        paths.push("Under "+thresh+" hours on a "+scopeLabel+" US itinerary: a US fare refund for significant delay is less likely. Ask for expenses if the delay was in the airline’s control.");
       }
       paths.push("Not an automatic €600. That is an EU-style cash band, not a US delay payout.");
       next="DOT refunds: transportation.gov/individuals/aviation-consumer-protection/refunds";
@@ -128,24 +151,32 @@
   function makeLetter(){
     var name=v("name"), air=v("airline"), fl=v("flight"), dt=v("date"), pnr=v("pnr");
     var a=v("orig"), b=v("dest"), what=document.getElementById("what").value, hrs=v("hours");
-    var track=document.getElementById("track").value, text="";
+    var track=document.getElementById("track").value;
+    var fare=v("fare"), payment=v("payment");
+    var scope=document.getElementById("usscope").value;
+    var text="";
     if(track==="us" && what==="bumped"){
       text="Subject: Denied boarding compensation — "+air+" "+fl+" "+dt+" — "+pnr+"\n\n"+
         "I was involuntarily denied boarding on "+air+" "+fl+" on "+dt+", record locator "+pnr+", "+a+" to "+b+". I did not volunteer my seat. Alternate arrival was "+hrs+" hours after the original arrival.\n\n"+
-        "Please pay denied boarding compensation under 14 CFR part 250 and refund unused ancillary fees.\n\n"+
+        "Fare amount paid: "+fare+"\nOriginal form of payment: "+payment+"\n\n"+
+        "Please pay denied boarding compensation under 14 CFR part 250 and refund unused ancillary fees to the original form of payment.\n\n"+
         "Attachments: boarding pass, bump notice, substitute itinerary.\n\n"+name;
     } else if(track==="us"){
-      var ev = what==="cancelled" ? "cancelled" : "delayed or changed by "+hrs+" hours";
+      var thresh = scope === "international" ? "6+" : "3+";
+      var scopeLabel = scope === "international" ? "international" : "domestic";
+      var ev = what==="cancelled" ? "cancelled" : "delayed or changed by "+hrs+" hours (significant delay threshold for this "+scopeLabel+" US itinerary: "+thresh+" hours)";
       text="Subject: Refund request — "+air+" "+fl+" "+dt+" — record locator "+pnr+"\n\n"+
         "I held a ticket on "+air+" "+fl+" from "+a+" to "+b+" on "+dt+", record locator "+pnr+".\n\n"+
-        "The flight was "+ev+". I did not accept rebooking, a voucher, or other compensation. I want a full refund of the airfare, taxes, and unused ancillary fees to the original form of payment.\n\n"+
+        "The flight was "+ev+". I did not accept rebooking, a voucher, or other compensation.\n\n"+
+        "Fare amount paid: "+fare+"\nOriginal form of payment: "+payment+"\n\n"+
+        "I want a full refund of the airfare, taxes, and unused ancillary fees ("+fare+") to the original form of payment ("+payment+").\n\n"+
         "This follows DOT refund rules for cancelled or significantly delayed/changed flights:\nhttps://www.transportation.gov/individuals/aviation-consumer-protection/refunds\n\n"+
         "Attachments: ticket, delay notice, receipts (if any).\n\n"+name;
     } else {
       var ev = what==="bumped" ? "denied boarding" : (what==="cancelled" ? "cancelled" : "delayed "+hrs+" hours at destination");
       text="Subject: Regulation 261/2004 claim — "+air+" "+fl+" "+dt+" — "+pnr+"\n\n"+
         "I request the compensation, refund/re-routing choice, and assistance due under Regulation (EC) 261/2004.\n\n"+
-        "Flight: "+air+" "+fl+"  "+a+" → "+b+"  "+dt+"\nRecord locator: "+pnr+"\nDelay at destination: "+hrs+" hours\nWhat happened: "+ev+"\n\n"+
+        "Flight: "+air+" "+fl+"  "+a+" → "+b+"  "+dt+"\nRecord locator: "+pnr+"\nDelay at destination: "+hrs+" hours\nWhat happened: "+ev+"\nFare amount paid: "+fare+"\nOriginal form of payment: "+payment+"\n\n"+
         "I have not received benefits for this disruption under another country's rules. If you claim extraordinary circumstances, send the evidence.\n\n"+
         "Official summary: https://europa.eu/youreurope/citizens/travel/passenger-rights/air/index_en.htm\n\n"+
         "Attachments: ticket, boarding pass, delay notice, receipts.\n\n"+name;
@@ -157,6 +188,7 @@
     t.select();
     navigator.clipboard.writeText(t.value);
   }
+  syncUsScope();
   </script>
 </body>
 </html>
