@@ -47,7 +47,7 @@
         <div><label>Hours early or late vs scheduled</label><input id="hours" placeholder="4" /></div>
       </div>
       <label>Which rules likely apply</label>
-      <select id="track" onchange="syncUsScope()">
+      <select id="track" onchange="syncTrackFields()">
         <option value="us">US itinerary (to, from, or within the United States)</option>
         <option value="eu">EU / EEA / Swiss rights may apply (261/2004)</option>
       </select>
@@ -58,6 +58,19 @@
           <option value="domestic">Domestic (within the United States)</option>
         </select>
         <p class="note">Significant change vs scheduled times (early or late): 3+ hours domestic, 6+ hours international. Refund only if you decline rebooking/voucher and choose not to travel.</p>
+      </div>
+      <div id="eu-fields-wrap" style="display:none">
+        <div class="grid2">
+          <div><label>Scheduled arrival (local)</label><input id="schedarr" placeholder="14 Sep 2026 18:40" /></div>
+          <div><label>Actual arrival (doors open)</label><input id="actarr" placeholder="14 Sep 2026 22:55" /></div>
+        </div>
+        <label>Flight distance band (for Article 7 amount, if you qualify)</label>
+        <select id="euband">
+          <option value="250">1,500 km or less — published band €250</option>
+          <option value="400">1,500–3,500 km / longer intra-EU — published band €400</option>
+          <option value="600">More than 3,500 km — published band €600</option>
+        </select>
+        <p class="note">Pick the band that matches your route. The letter names that published amount; it is not a guarantee the airline will pay. Weather, ATC, and some strikes can still block cash.</p>
       </div>
       <label>Did you take the delayed flight, or accept rebooking / a voucher / travel credit?</label>
       <select id="accepted">
@@ -96,9 +109,10 @@
   </footer>
   <script>
   function v(id){ return document.getElementById(id).value.trim() || "[fill in]"; }
-  function syncUsScope(){
-    var us = document.getElementById("track").value === "us";
-    document.getElementById("us-scope-wrap").style.display = us ? "block" : "none";
+  function syncTrackFields(){
+    var track = document.getElementById("track").value;
+    document.getElementById("us-scope-wrap").style.display = track === "us" ? "block" : "none";
+    document.getElementById("eu-fields-wrap").style.display = track === "eu" ? "block" : "none";
   }
   function usSignificantDelay(hrs, scope){
     if(scope === "international") return hrs >= 6;
@@ -174,10 +188,15 @@
         "Attachments: ticket, delay notice, receipts (if any).\n\n"+name;
     } else {
       var ev = what==="bumped" ? "denied boarding" : (what==="cancelled" ? "cancelled" : "delayed "+hrs+" hours at destination");
+      var sched = v("schedarr"), act = v("actarr");
+      var band = document.getElementById("euband").value;
+      var bandKm = band==="250" ? "1,500 km or less" : (band==="400" ? "1,500–3,500 km / longer intra-EU" : "more than 3,500 km");
       text="Subject: Regulation 261/2004 claim — "+air+" "+fl+" "+dt+" — "+pnr+"\n\n"+
         "I request the compensation, refund/re-routing choice, and assistance due under Regulation (EC) 261/2004.\n\n"+
-        "Flight: "+air+" "+fl+"  "+a+" → "+b+"  "+dt+"\nRecord locator: "+pnr+"\nDelay at destination: "+hrs+" hours\nWhat happened: "+ev+"\nFare amount paid: "+fare+"\nOriginal form of payment: "+payment+"\n\n"+
-        "I have not received benefits for this disruption under another country's rules. If you claim extraordinary circumstances, send the evidence.\n\n"+
+        "Passenger: "+name+"\nFlight: "+air+" "+fl+"  "+a+" → "+b+"  "+dt+"\nRecord locator: "+pnr+"\nScheduled arrival: "+sched+"\nActual arrival (doors open): "+act+"\nDelay at destination: "+hrs+" hours\nWhat happened: "+ev+"\nDistance band (as estimated): "+bandKm+"\nFare amount paid: "+fare+"\nOriginal form of payment: "+payment+"\n\n"+
+        "Under Article 7 of Regulation (EC) 261/2004, I claim €"+band+" in compensation for this disruption, subject to eligibility (including that the airline cannot prove extraordinary circumstances).\n\n"+
+        "I have not received benefits for this disruption under another country's rules. If you claim extraordinary circumstances, send the evidence within 14 days of this letter.\n\n"+
+        "Please confirm payment of €"+band+" (or a reasoned refusal with evidence) within 14 days of receipt.\n\n"+
         "Official summary: https://europa.eu/youreurope/citizens/travel/passenger-rights/air/index_en.htm\n\n"+
         "Attachments: ticket, boarding pass, delay notice, receipts.\n\n"+name;
     }
@@ -188,7 +207,7 @@
     t.select();
     navigator.clipboard.writeText(t.value);
   }
-  syncUsScope();
+  syncTrackFields();
   </script>
 </body>
 </html>
