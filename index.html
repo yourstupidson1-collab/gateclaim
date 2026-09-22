@@ -91,6 +91,21 @@
         <label>Your letter — copy and send to the airline</label>
         <textarea id="out" readonly></textarea>
         <p><button class="btn" type="button" onclick="copyOut()">Copy letter</button></p>
+        <div id="where-to-send" class="where-send">
+          <p class="eyebrow">Next step</p>
+          <p><strong>Send this to the airline that operated your flight</strong> (not the ticket seller if they differ).</p>
+          <ul>
+            <li><strong>Email:</strong> <a id="mailto-draft" href="mailto:?subject=Delay%2Fcancel%20claim">Open a draft with the subject filled</a> — paste the letter, attach your boarding pass and delay notice.</li>
+            <li><strong>Or use their form</strong> (operating carrier):
+              <a href="https://www.delta.com/us/en/need-help/overview?commentComplaintsForm=" target="_blank" rel="noopener">Delta</a> ·
+              <a href="https://www.united.com/en/us/customercare" target="_blank" rel="noopener">United</a> ·
+              <a href="https://www.aa.com/contactus/forms/?topic=CR" target="_blank" rel="noopener">American</a> ·
+              <a href="https://support.southwest.com/helpcenter/s/contact-us" target="_blank" rel="noopener">Southwest</a> ·
+              <a href="https://www.jetblue.com/contact-us/share-a-concern" target="_blank" rel="noopener">JetBlue</a>
+            </li>
+          </ul>
+          <p class="note">GateClaim does not file your claim or promise a payout. You send it yourself.</p>
+        </div>
       </div>
     </form>
 
@@ -203,11 +218,21 @@
     }
     document.getElementById("out").value = text;
   }
+  function refreshMailto(){
+    var fl = document.getElementById("flight").value.trim() || "[flight #]";
+    var dt = document.getElementById("date").value.trim() || "[date]";
+    var sub = "Delay/cancel claim — " + fl + " — " + dt;
+    var a = document.getElementById("mailto-draft");
+    if(a) a.href = "mailto:?subject=" + encodeURIComponent(sub);
+  }
   function copyOut(){
     var t=document.getElementById("out");
     t.select();
     navigator.clipboard.writeText(t.value);
+    refreshMailto();
   }
+  var _makeLetter = makeLetter;
+  makeLetter = function(){ _makeLetter(); refreshMailto(); };
   syncTrackFields();
   </script>
 </body>
